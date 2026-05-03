@@ -122,8 +122,8 @@
     font-size: 0.85rem;
   }
   .sc-avatar {
-    width: 52px;
-    height: 52px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
     border: 2px solid var(--border);
     margin: 0 auto 0.5rem;
@@ -202,26 +202,26 @@
   /* Corner cell */
   .matrix .corner {
     background: var(--bg);
-    width: 110px;
-    min-width: 110px;
+    width: 90px;
+    min-width: 90px;
   }
 
   /* Column headers (top) */
   .col-header {
     background: var(--bg);
     text-align: center;
-    width: 80px;
+    width: 90px;
   }
   .col-header-inner {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 0.6rem 0.4rem;
+    padding: 0.8rem 0.4rem;
     gap: 0.3rem;
   }
   .col-header img {
-    width: 34px;
-    height: 34px;
+    width: 62px;
+    height: 62px;
     border-radius: 50%;
     border: 2px solid var(--border);
     object-fit: cover;
@@ -246,8 +246,8 @@
     gap: 0.55rem;
   }
   .row-header img {
-    width: 32px;
-    height: 32px;
+    width: 58px;
+    height: 58px;
     border-radius: 50%;
     border: 2px solid var(--border);
     object-fit: cover;
@@ -271,8 +271,8 @@
     cursor: pointer;
     transition: background 0.15s;
     position: relative;
-    width: 80px;
-    height: 52px;
+    width: 90px;
+    height: 76px;
   }
   td.result-cell.diagonal {
     background: repeating-linear-gradient(
@@ -466,8 +466,8 @@
     gap: 0.5rem;
   }
   .rank-table .rank-name img {
-    width: 26px;
-    height: 26px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     border: 1px solid var(--border);
     object-fit: cover;
@@ -631,11 +631,11 @@ function renderMatrix() {
   const t = document.getElementById('matrix-table');
   let html = '<thead><tr><th class="corner"></th>';
   for (let j=0;j<N;j++) {
-    html += `<th class="col-header"><div class="col-header-inner">${avatarEl(j,34)}<span class="player-idx">${j+1}</span></div></th>`;
+    html += `<th class="col-header"><div class="col-header-inner">${avatarEl(j,62)}<span class="player-idx">${j+1}</span></div></th>`;
   }
   html += '</tr></thead><tbody>';
   for (let i=0;i<N;i++) {
-    html += `<tr><td class="row-header"><div class="row-header-inner">${avatarEl(i,32)}<span class="rh-name">${PLAYERS[i].name}</span></div></td>`;
+    html += `<tr><td class="row-header"><div class="row-header-inner">${avatarEl(i,58)}<span class="rh-name">${PLAYERS[i].name}</span></div></td>`;
     for (let j=0;j<N;j++) {
       if (i===j) {
         html += `<td class="result-cell diagonal"></td>`;
@@ -661,7 +661,7 @@ function renderScoreboard() {
   stats.forEach(s => {
     const leader = s.pts === maxPts && s.pts > 0 ? 'leader' : '';
     html += `<div class="score-card ${leader}">
-      ${avatarEl(s.idx,52)}
+      ${avatarEl(s.idx,80)}
       <div class="sc-name">${PLAYERS[s.idx].name}</div>
       <div class="sc-pts">${s.pts} <span>BODŮ</span></div>
       <div class="sc-record">${s.wins}V – ${s.losses}P</div>
@@ -676,7 +676,7 @@ function renderRankings() {
   stats.forEach((s,rank) => {
     html += `<tr>
       <td class="rank-no">${rank+1}.</td>
-      <td><div class="rank-name">${avatarEl(s.idx,26)} ${PLAYERS[s.idx].name}</div></td>
+      <td><div class="rank-name">${avatarEl(s.idx,42)} ${PLAYERS[s.idx].name}</div></td>
       <td class="pts">${s.pts}</td>
       <td class="wins">${s.wins}</td>
       <td class="losses">${s.losses}</td>
