@@ -86,6 +86,26 @@
     font-size: 1rem;
   }
 
+  .save-btn {
+    margin-top: 1rem;
+    padding: 0.6rem 1.3rem;
+    background: var(--panel);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    color: var(--gold);
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: all 0.3s ease;
+  }
+
+  .save-btn:hover {
+    background: var(--accent);
+    color: var(--bg);
+    box-shadow: 0 0 15px var(--glow);
+  }
+
   /* Scoreboard */
   .scoreboard {
     display: flex;
@@ -357,6 +377,60 @@
     margin-top: 0.4rem;
     font-style: italic;
   }
+
+  .winner-selector {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    margin: 1.5rem 0;
+  }
+
+  .winner-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    background: var(--bg);
+    transition: all 0.3s ease;
+    min-width: 120px;
+  }
+
+  .winner-option:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px var(--glow);
+    transform: translateY(-2px);
+  }
+
+  .winner-option.selected {
+    border-color: var(--gold);
+    box-shadow: 0 0 30px rgba(232,192,106,0.3);
+    background: rgba(232,192,106,0.05);
+  }
+
+  .winner-option .avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    margin-bottom: 0.8rem;
+    object-fit: cover;
+    background: var(--draw);
+  }
+
+  .winner-option.selected .avatar {
+    border-color: var(--gold);
+  }
+
+  .winner-option .player-name {
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    color: var(--gold);
+    text-align: center;
+  }
+
   .popup-btns {
     display: flex;
     gap: 0.7rem;
@@ -486,6 +560,9 @@
     <div class="title-eyebrow">⚔ Round Robin ⚔</div>
     <h1>Polytopia Turnaj</h1>
     <div class="subtitle">1v1 · Drylands · Kickoo &nbsp;⚔&nbsp; Round Robin</div>
+    <button class="save-btn" onclick="save()" title="Stáhnout results.json">
+      💾 Uložit výsledky
+    </button>
   </header>
 
   <!-- Progress -->
@@ -535,14 +612,15 @@
 <!-- Popup -->
 <div class="popup-overlay" id="popup">
   <div class="popup">
-    <h3>Zadej výsledek</h3>
+    <h3>Kdo vyhrál?</h3>
     <div class="matchup-label" id="popup-matchup"></div>
-    <input type="text" id="popup-input" placeholder="1:0 nebo 0:1" maxlength="10" autocomplete="off">
-    <div class="hint">Formát: 1:0 (výhra řádku) &nbsp;|&nbsp; 0:1 (výhra sloupce)</div>
+    <div class="winner-selector" id="winner-selector">
+      <!-- Player avatars will be inserted here -->
+    </div>
+    <div class="hint">Klikni na avatara vítěze</div>
     <div class="popup-btns">
       <button class="btn btn-cancel" onclick="closePopup()">Zrušit</button>
       <button class="btn btn-clear"  onclick="clearResult()">Smazat</button>
-      <button class="btn btn-confirm" onclick="confirmResult()">Potvrdit</button>
     </div>
   </div>
 </div>
@@ -624,7 +702,6 @@ function render() {
   renderScoreboard();
   renderRankings();
   renderProgress();
-  save();
 }
 
 function renderMatrix() {
@@ -701,9 +778,42 @@ function openPopup(r,c) {
   const existing = getResult(r,c);
   document.getElementById('popup-matchup').textContent =
     `${PLAYERS[r].name}  vs  ${PLAYERS[c].name}`;
-  document.getElementById('popup-input').value = existing || '';
+
+  // Build winner selector with avatars
+  const selector = document.getElementById('winner-selector');
+  const player1 = PLAYERS[r];
+  const player2 = PLAYERS[c];
+
+  selector.innerHTML = `
+    <div class="winner-option" data-winner="r" onclick="selectWinner('r')">
+      ${avatarEl(r, 80).replace('class="avatar-circle"', 'class="avatar"')}
+      <div class="player-name">${player1.name}</div>
+    </div>
+    <div class="winner-option" data-winner="c" onclick="selectWinner('c')">
+      ${avatarEl(c, 80).replace('class="avatar-circle"', 'class="avatar"')}
+      <div class="player-name">${player2.name}</div>
+    </div>
+  `;
+
+  // Pre-select if result exists
+  if (existing === '1:0') {
+    setTimeout(() => document.querySelector('[data-winner="r"]').classList.add('selected'), 10);
+  } else if (existing === '0:1') {
+    setTimeout(() => document.querySelector('[data-winner="c"]').classList.add('selected'), 10);
+  }
+
   document.getElementById('popup').classList.add('active');
-  setTimeout(()=>document.getElementById('popup-input').focus(),50);
+}
+
+function selectWinner(winner) {
+  // Remove previous selection
+  document.querySelectorAll('.winner-option').forEach(el => el.classList.remove('selected'));
+
+  // Add selection to clicked option
+  document.querySelector(`[data-winner="${winner}"]`).classList.add('selected');
+
+  // Auto-confirm after selection
+  setTimeout(() => confirmResult(winner), 300);
 }
 
 function closePopup() {
@@ -711,17 +821,24 @@ function closePopup() {
   activeCell = null;
 }
 
-function confirmResult() {
+function confirmResult(winner) {
   if (!activeCell) return;
-  const raw = document.getElementById('popup-input').value.trim();
-  if (raw !== '1:0' && raw !== '0:1') {
-    showToast('⚠ Zadej 1:0 nebo 0:1');
-    return;
+
+  // If no winner passed, check for selected option
+  if (!winner) {
+    const selected = document.querySelector('.winner-option.selected');
+    if (!selected) {
+      showToast('⚠ Vyber vítěze');
+      return;
+    }
+    winner = selected.getAttribute('data-winner');
   }
-  setResult(activeCell.r, activeCell.c, raw);
+
+  const result = winner === 'r' ? '1:0' : '0:1';
+  setResult(activeCell.r, activeCell.c, result);
   closePopup();
   render();
-  showToast(raw === '1:0'
+  showToast(result === '1:0'
     ? `✓ Výhra: ${PLAYERS[activeCell?.r]?.name ?? ''}`
     : `✓ Výhra: ${PLAYERS[activeCell?.c]?.name ?? ''}`);
 }
@@ -735,12 +852,13 @@ function clearResult() {
 }
 
 // Enter key
-document.getElementById('popup-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') confirmResult();
-  if (e.key === 'Escape') closePopup();
-});
 document.getElementById('popup').addEventListener('click', e => {
   if (e.target === document.getElementById('popup')) closePopup();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('popup').classList.contains('active')) {
+    closePopup();
+  }
 });
 
 // ─── TOAST ─────────────────────────────────────────────────────────────────
@@ -755,13 +873,28 @@ function showToast(msg) {
 
 // ─── PERSIST ───────────────────────────────────────────────────────────────
 function save() {
-  try { localStorage.setItem('polytopia_results', JSON.stringify(results)); } catch(e){}
+  // Download results.json file
+  const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'results.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('💾 Soubor results.json stažen!');
 }
-function load() {
+
+async function load() {
   try {
-    const d = localStorage.getItem('polytopia_results');
-    if (d) results = JSON.parse(d);
-  } catch(e){}
+    const response = await fetch('results.json');
+    if (response.ok) {
+      const data = await response.json();
+      results = data;
+      render();
+    }
+  } catch(e) {
+    console.log('No results.json found, starting fresh');
+  }
 }
 
 // ─── INIT ──────────────────────────────────────────────────────────────────
