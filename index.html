@@ -625,6 +625,10 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<!-- Firebase SDK - must load before main script -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
 <script>
 // ─── CONFIG ────────────────────────────────────────────────────────────────
 const PLAYERS = [
@@ -968,9 +972,5 @@ if (!initFirebase()) {
   render();
 }
 </script>
-
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </body>
 </html>
