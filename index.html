@@ -644,7 +644,57 @@ const TOTAL = (N * (N - 1)) / 2;
 // Only upper triangle is "canonical" — we store for row < col
 let results = {};
 
-// Auto-load from localStorage
+// ─── FIREBASE CONFIG ───────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyBZtsslw-R17toTXbKBoikhc0vyOdAeDe0",
+  authDomain: "polytournament-87d5b.firebaseapp.com",
+  databaseURL: "https://polytournament-87d5b-default-rtdb.firebaseio.com",
+  projectId: "polytournament-87d5b",
+  storageBucket: "polytournament-87d5b.firebasestorage.app",
+  messagingSenderId: "428892548438",
+  appId: "1:428892548438:web:8c7a105e25fedd868b7af7"
+};
+
+// Initialize Firebase
+let database;
+let resultsRef;
+
+function initFirebase() {
+  if (typeof firebase !== 'undefined' && firebaseConfig.apiKey !== "YOUR_API_KEY") {
+    try {
+      firebase.initializeApp(firebaseConfig);
+      database = firebase.database();
+      resultsRef = database.ref('results');
+
+      // Listen for real-time updates
+      resultsRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          results = data;
+          render();
+        }
+      });
+      console.log('✓ Firebase connected');
+      return true;
+    } catch (e) {
+      console.error('Firebase init failed:', e);
+      return false;
+    }
+  }
+  return false;
+}
+
+// Auto-save to Firebase (or localStorage fallback)
+function autoSave() {
+  if (resultsRef) {
+    resultsRef.set(results).catch(e => console.error('Save failed:', e));
+  } else {
+    // Fallback to localStorage if Firebase not configured
+    localStorage.setItem('polytournament-results', JSON.stringify(results));
+  }
+}
+
+// Load from localStorage (fallback if Firebase not configured)
 function loadFromStorage() {
   const stored = localStorage.getItem('polytournament-results');
   if (stored) {
@@ -654,11 +704,6 @@ function loadFromStorage() {
       console.error('Failed to load results:', e);
     }
   }
-}
-
-// Auto-save to localStorage
-function autoSave() {
-  localStorage.setItem('polytournament-results', JSON.stringify(results));
 }
 const key = (r,c) => `${r}-${c}`;
 
@@ -914,11 +959,18 @@ async function load() {
 }
 
 // ─── INIT ──────────────────────────────────────────────────────────────────
-loadFromStorage();
-if (Object.keys(results).length === 0) {
-  load();
+// Try Firebase first, fallback to localStorage
+if (!initFirebase()) {
+  loadFromStorage();
+  if (Object.keys(results).length === 0) {
+    load();
+  }
+  render();
 }
-render();
 </script>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </body>
 </html>
