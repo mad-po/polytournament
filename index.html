@@ -964,13 +964,17 @@ async function load() {
 
 // ─── INIT ──────────────────────────────────────────────────────────────────
 // Try Firebase first, fallback to localStorage
-if (!initFirebase()) {
+const firebaseConnected = initFirebase();
+
+if (!firebaseConnected) {
   loadFromStorage();
   if (Object.keys(results).length === 0) {
     load();
   }
-  render();
 }
+
+// Always render initially (Firebase listener will update later)
+render();
 </script>
 </body>
 </html>
