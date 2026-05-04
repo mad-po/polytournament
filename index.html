@@ -26,7 +26,7 @@
     background: var(--bg);
     color: var(--text);
     font-family: 'Crimson Text', Georgia, serif;
-    min-height: 100vh;
+    min-height: 100vh;/btw
     overflow-x: auto;
   }
 
@@ -557,12 +557,9 @@
 <div class="wrapper">
 
   <header>
-    <div class="title-eyebrow">⚔ Round Robin ⚔</div>
+    <div class="title-eyebrow">⚔ Turnaj ⚔</div>
     <h1>Polytopia Turnaj</h1>
-    <div class="subtitle">1v1 · Drylands · Kickoo &nbsp;⚔&nbsp; Round Robin</div>
-    <button class="save-btn" onclick="save()" title="Stáhnout results.json">
-      💾 Uložit výsledky
-    </button>
+    <div class="subtitle">1v1 · Drylands · Kickoo</div>
   </header>
 
   <!-- Progress -->
@@ -646,6 +643,23 @@ const TOTAL = (N * (N - 1)) / 2;
 // results[i][j]: "1:0" or "0:1" or null (i is row/winner perspective)
 // Only upper triangle is "canonical" — we store for row < col
 let results = {};
+
+// Auto-load from localStorage
+function loadFromStorage() {
+  const stored = localStorage.getItem('polytournament-results');
+  if (stored) {
+    try {
+      results = JSON.parse(stored);
+    } catch (e) {
+      console.error('Failed to load results:', e);
+    }
+  }
+}
+
+// Auto-save to localStorage
+function autoSave() {
+  localStorage.setItem('polytournament-results', JSON.stringify(results));
+}
 const key = (r,c) => `${r}-${c}`;
 
 function getResult(r,c) {
@@ -719,7 +733,7 @@ function renderMatrix() {
       } else {
         const r = getResult(i,j);
         let cls = 'empty';
-        let disp = '';
+        let disp = 'přidej výsledek';
         if (r==='1:0') { cls='win'; disp='1:0'; }
         else if (r==='0:1') { cls='loss'; disp='0:1'; }
         html += `<td class="result-cell ${cls}" onclick="openPopup(${i},${j})" title="${PLAYERS[i].name} vs ${PLAYERS[j].name}"><span class="result-display">${disp}</span></td>`;
@@ -836,6 +850,7 @@ function confirmResult(winner) {
 
   const result = winner === 'r' ? '1:0' : '0:1';
   setResult(activeCell.r, activeCell.c, result);
+  autoSave();
   closePopup();
   render();
   showToast(result === '1:0'
@@ -846,6 +861,7 @@ function confirmResult(winner) {
 function clearResult() {
   if (!activeCell) return;
   clearResultAt(activeCell.r, activeCell.c);
+  autoSave();
   closePopup();
   render();
   showToast('Výsledek smazán');
@@ -898,7 +914,10 @@ async function load() {
 }
 
 // ─── INIT ──────────────────────────────────────────────────────────────────
-load();
+loadFromStorage();
+if (Object.keys(results).length === 0) {
+  load();
+}
 render();
 </script>
 </body>
